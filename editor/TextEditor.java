@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class TextEditor {
     private static final String INTERNAL_NEWLINE = "\n";
@@ -159,5 +161,180 @@ public class TextEditor {
         String newContent = this.content.replace(searchTerm, replacement != null ? replacement : "");
         overwriteContent(newContent);
         return newContent;
+    }
+
+    // Feature: Word Count
+    public int getWordCount() {
+        if (this.content.isEmpty()) {
+            return 0;
+        }
+        return this.content.trim().split("\\s+").length;
+    }
+
+    public int getCharacterCount() {
+        return this.content.length();
+    }
+
+    public int getLineCount() {
+        if (this.content.isEmpty()) {
+            return 0;
+        }
+        return this.content.split("\n").length;
+    }
+
+    // Feature: Convert Case
+    public void convertToUpperCase() throws IOException {
+        overwriteContent(this.content.toUpperCase());
+    }
+
+    public void convertToLowerCase() throws IOException {
+        overwriteContent(this.content.toLowerCase());
+    }
+
+    public void convertToTitleCase() throws IOException {
+        String[] words = this.content.split("\\s+");
+        StringBuilder titleCase = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            if (!words[i].isEmpty()) {
+                titleCase.append(words[i].substring(0, 1).toUpperCase())
+                        .append(words[i].substring(1).toLowerCase());
+                if (i < words.length - 1) {
+                    titleCase.append(" ");
+                }
+            }
+        }
+        overwriteContent(titleCase.toString());
+    }
+
+    // Feature: Delete Line
+    public void deleteLine(int lineNumber) throws IOException {
+        if (lineNumber <= 0) {
+            throw new IllegalArgumentException("Line number must be greater than 0");
+        }
+        String[] lines = this.content.split("\n", -1);
+        if (lineNumber > lines.length) {
+            throw new IndexOutOfBoundsException("Line " + lineNumber + " does not exist");
+        }
+        
+        StringBuilder newContent = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (i != lineNumber - 1) {
+                if (newContent.length() > 0) {
+                    newContent.append("\n");
+                }
+                newContent.append(lines[i]);
+            }
+        }
+        overwriteContent(newContent.toString());
+    }
+
+    // Feature: Insert Line
+    public void insertLine(int lineNumber, String lineContent) throws IOException {
+        if (lineNumber <= 0) {
+            throw new IllegalArgumentException("Line number must be greater than 0");
+        }
+        String[] lines = this.content.isEmpty() ? new String[]{} : this.content.split("\n", -1);
+        if (lineNumber > lines.length + 1) {
+            throw new IndexOutOfBoundsException("Cannot insert at line " + lineNumber);
+        }
+        
+        StringBuilder newContent = new StringBuilder();
+        for (int i = 0; i <= lines.length; i++) {
+            if (i == lineNumber - 1) {
+                newContent.append(lineContent);
+            }
+            if (i < lines.length) {
+                if (i == lineNumber - 1) {
+                    newContent.append("\n");
+                }
+                newContent.append(lines[i]);
+                if (i < lines.length - 1) {
+                    newContent.append("\n");
+                }
+            }
+        }
+        overwriteContent(newContent.toString());
+    }
+
+    // Feature: Trim Whitespace
+    public void trimWhitespace() throws IOException {
+        String[] lines = this.content.split("\n");
+        StringBuilder trimmed = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            trimmed.append(lines[i].trim());
+            if (i < lines.length - 1) {
+                trimmed.append("\n");
+            }
+        }
+        overwriteContent(trimmed.toString());
+    }
+
+    // Feature: Regex Search
+    public List<Integer> findByRegex(String pattern) {
+        var indices = new java.util.ArrayList<Integer>();
+        if (pattern == null || pattern.isEmpty()) {
+            throw new IllegalArgumentException("Pattern cannot be null or empty");
+        }
+        try {
+            Pattern p = Pattern.compile(pattern);
+            Matcher m = p.matcher(this.content);
+            while (m.find()) {
+                indices.add(m.start());
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid regex pattern: " + e.getMessage());
+        }
+        return indices;
+    }
+
+    // Feature: Next/Previous Match Navigation
+    private String lastSearchTerm = null;
+    private int currentMatchIndex = -1;
+    private List<Integer> lastSearchResults = null;
+
+    public int getNextMatch(String searchTerm) {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        
+        if (!searchTerm.equals(lastSearchTerm)) {
+            lastSearchTerm = searchTerm;
+            lastSearchResults = findAll(searchTerm);
+            currentMatchIndex = -1;
+        }
+        
+        if (lastSearchResults.isEmpty()) {
+            return -1;
+        }
+        
+        currentMatchIndex++;
+        if (currentMatchIndex >= lastSearchResults.size()) {
+            currentMatchIndex = 0;
+        }
+        
+        return lastSearchResults.get(currentMatchIndex);
+    }
+
+    public int getPreviousMatch(String searchTerm) {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        
+        if (!searchTerm.equals(lastSearchTerm)) {
+            lastSearchTerm = searchTerm;
+            lastSearchResults = findAll(searchTerm);
+            currentMatchIndex = lastSearchResults.size();
+        }
+        
+        if (lastSearchResults.isEmpty()) {
+            return -1;
+        }
+        
+        currentMatchIndex--;
+        if (currentMatchIndex < 0) {
+            currentMatchIndex = lastSearchResults.size() - 1;
+        }
+        
+        return lastSearchResults.get(currentMatchIndex);
     }
 }
