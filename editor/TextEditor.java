@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class TextEditor {
     private static final String INTERNAL_NEWLINE = "\n";
@@ -115,5 +116,48 @@ public class TextEditor {
 
     public void restoreState(EditorState state) throws IOException {
         overwriteContent(state.getContent());
+    }
+
+    public int findFirst(String searchTerm) {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        return this.content.indexOf(searchTerm);
+    }
+
+    public List<Integer> findAll(String searchTerm) {
+        var indices = new java.util.ArrayList<Integer>();
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        int index = 0;
+        while ((index = this.content.indexOf(searchTerm, index)) != -1) {
+            indices.add(index);
+            index += searchTerm.length();
+        }
+        return indices;
+    }
+
+    public String replaceFirst(String searchTerm, String replacement) throws IOException {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        int index = this.content.indexOf(searchTerm);
+        if (index == -1) {
+            return this.content;
+        }
+        String newContent = this.content.substring(0, index) + (replacement != null ? replacement : "") 
+                          + this.content.substring(index + searchTerm.length());
+        overwriteContent(newContent);
+        return newContent;
+    }
+
+    public String replaceAll(String searchTerm, String replacement) throws IOException {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            throw new IllegalArgumentException("Search term cannot be null or empty");
+        }
+        String newContent = this.content.replace(searchTerm, replacement != null ? replacement : "");
+        overwriteContent(newContent);
+        return newContent;
     }
 }

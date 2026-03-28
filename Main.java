@@ -27,14 +27,16 @@ public class Main {
         System.out.println("Your TextEditor is initialized");
         System.out.println("File: " + textEditor.getFilePath());
 
-        while (selectedOption != 6) {
+        while (selectedOption != 8) {
             System.out.println("\n---- Menu ----");
             System.out.println("1. Read content");
             System.out.println("2. Add content");
             System.out.println("3. Erase all content");
             System.out.println("4. Undo");
             System.out.println("5. Redo");
-            System.out.println("6. Exit");
+            System.out.println("6. Find");
+            System.out.println("7. Find and Replace");
+            System.out.println("8. Exit");
             System.out.print("Select an option: ");
             try {
                 selectedOption = Integer.parseInt(scanner.nextLine());
@@ -79,7 +81,41 @@ public class Main {
                         textEditor.restoreState(editorRedoHistory.pop());
                         System.out.println("Redid last undone change");
                         break;
-                    case 6: // Exit
+                    case 6: // Find
+                        System.out.println("Enter text to find:");
+                        String searchTerm = scanner.nextLine();
+                        var occurrences = textEditor.findAll(searchTerm);
+                        if (occurrences.isEmpty()) {
+                            System.out.println("No matches found for: " + searchTerm);
+                        } else {
+                            System.out.println("Found " + occurrences.size() + " match(es) at position(s): " + occurrences);
+                        }
+                        break;
+                    case 7: // Find and Replace
+                        System.out.println("Enter text to find:");
+                        String findTerm = scanner.nextLine();
+                        System.out.println("Enter replacement text:");
+                        String replacementText = scanner.nextLine();
+                        
+                        var matchesFound = textEditor.findAll(findTerm);
+                        if (matchesFound.isEmpty()) {
+                            System.out.println("No matches found for: " + findTerm);
+                            break;
+                        }
+                        
+                        System.out.println("Found " + matchesFound.size() + " match(es). Replace all? (yes/no):");
+                        String confirmReplace = scanner.nextLine();
+                        
+                        if (confirmReplace.equalsIgnoreCase("yes") || confirmReplace.equalsIgnoreCase("y")) {
+                            editorHistory.push(textEditor.createState());
+                            textEditor.replaceAll(findTerm, replacementText);
+                            editorRedoHistory.clear();
+                            System.out.println("Replaced " + matchesFound.size() + " occurrence(s)");
+                        } else {
+                            System.out.println("Replace cancelled");
+                        }
+                        break;
+                    case 8: // Exit
                         System.out.println("Exiting TextEditor...");
                         scanner.close();
                         break;
