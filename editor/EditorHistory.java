@@ -1,13 +1,13 @@
-package memento;
+package editor;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
-public class EditorRedoHistory {
+public class EditorHistory {
     private final Deque<EditorState> editorStates;
 
-    public EditorRedoHistory() {
+    public EditorHistory() {
         editorStates = new ArrayDeque<EditorState>();
     }
 
